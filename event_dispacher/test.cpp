@@ -4,12 +4,14 @@
 
 namespace {
 
+	// イベントの種類 (文字列等でも可)
 	enum class InputEvent
 	{
 		Int,
 		Char,
 	};
 
+	// イベント情報
 	struct IntInputEventInfo : wx2::IEventInfo
 	{
 		IntInputEventInfo(int v) : val(v) {}
@@ -21,6 +23,7 @@ namespace {
 		char val;
 	};
 
+	// コールバック
 	void OnIntInput(const IntInputEventInfo& info)
 	{
 		std::cout << "Input int : " << info.val << std::endl;
@@ -35,25 +38,28 @@ namespace {
 int main()
 {
 	wx2::EventDispacher<InputEvent> event_dispacher;
+
+	// イベントの登録
 	event_dispacher.AddEventListener(InputEvent::Int, OnIntInput);
 	event_dispacher.AddEventListener(InputEvent::Char, OnCharInput);
 
-	std::string input;
-	std::cout << "半角文字列を入力してください\n>> ";
-	std::getline(std::cin, input);
+	std::string input = {};
 
-	while (!input.empty())
+	// "quit"で終了
+	while (input != "quit")
 	{
-		char front = input.front();
-		input.erase(input.begin());
+		for (const auto& c : input)
+		{
+			// イベントを実行
+			if (c >= '0' && c <= '9')
+				event_dispacher.Dispatch(InputEvent::Int, IntInputEventInfo(static_cast<int>(c - '0')));
+			else
+				event_dispacher.Dispatch(InputEvent::Char, CharInputEventInfo(c));
+		}
 
-		if (front >= '0' && front <= '9')
-			event_dispacher.Dispatch(InputEvent::Int, IntInputEventInfo(static_cast<int>(front - '0')));
-		else
-			event_dispacher.Dispatch(InputEvent::Char, CharInputEventInfo(front));
+		std::cout << "半角文字列を入力してください\n>> ";
+		std::getline(std::cin, input);
 	}
-
-	std::cin.get();
 
 	return 0;
 }
