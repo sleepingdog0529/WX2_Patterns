@@ -7,13 +7,11 @@
 #pragma once
 #include <unordered_map>
 #include <functional>
+#include <concepts>
 
 namespace wx2 {
 
-	// イベントの情報構造体はこのインターフェースを継承する
-	struct IEventInfo {};
-
-	template <typename EventType>
+	template <typename EventInfoBase, typename EventType>
 	class EventDispacher
 	{
 	public:
@@ -28,12 +26,13 @@ namespace wx2 {
 		void AddEventListener(EventType event_type, F&& callback, EventInfoType&&...)
 		{
 			static_assert(sizeof...(EventInfoType) <= 1);
-			auto [it, unuse] = callbacks_.try_emplace(event_type, std::vector<CallbackFuncType<IEventInfo>>());
-			it->second.emplace_back([cb = std::forward<F>(callback)] (IEventInfo&& e) { cb(static_cast<EventInfoType&&>(e)); });
+			auto [it, unuse] = callbacks_.try_emplace(event_type, std::vector<CallbackFuncType<EventInfoBase>>());
+			it->second.emplace_back([cb = std::forward<F>(callback)] (EventInfoBase&& e) { cb(static_cast<EventInfoType&&>(e)); });
 		}
 
 		// イベント呼び出し
 		template <typename EventInfoType>
+		requires std::convertible_to<EventInfoType, EventInfoBase>
 		void Dispatch(EventType event_type, EventInfoType&& event)
 		{
 			auto it = callbacks_.find(event_type);
@@ -42,12 +41,12 @@ namespace wx2 {
 
 			for (const auto& e : it->second)
 			{
-				e(std::forward<IEventInfo>(event));
+				e(std::forward<EventInfoBase>(event));
 			}
 		}
 
 	private:
-		std::unordered_map<EventType, std::vector<CallbackFuncType<IEventInfo>>> callbacks_;
+		std::unordered_map<EventType, std::vector<CallbackFuncType<EventInfoBase>>> callbacks_;
 	};
 
 }

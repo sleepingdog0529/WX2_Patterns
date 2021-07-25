@@ -11,13 +11,18 @@ namespace {
 		Char,
 	};
 
+	struct IEventInfo
+	{
+
+	};
+
 	// イベント情報
-	struct IntInputEventInfo : wx2::IEventInfo
+	struct IntInputEventInfo : IEventInfo
 	{
 		IntInputEventInfo(int v) : val(v) {}
 		int val;
 	};
-	struct CharInputEventInfo : wx2::IEventInfo
+	struct CharInputEventInfo : IEventInfo
 	{
 		CharInputEventInfo(int v) : val(v) {}
 		char val;
@@ -37,7 +42,7 @@ namespace {
 
 int main()
 {
-	wx2::EventDispacher<InputEvent> event_dispacher;
+	wx2::EventDispacher<IEventInfo, InputEvent> event_dispacher;
 
 	// イベントの登録
 	event_dispacher.AddEventListener(InputEvent::Int, OnIntInput);
